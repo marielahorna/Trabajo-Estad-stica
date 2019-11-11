@@ -1,0 +1,47 @@
+
+TODAS LAS DATAS:
+```{r}
+datafin=merge(CountryStatus, GINIFIN, by.x="Country", "Country")
+DATAFINAL=merge(datafin, culturapolitica, by.x="Country", "Country")
+str(DATAFINAL)
+```
+
+Condiciones políticas:
+
+```{r}
+#CULTURA POLÍTICA
+
+library(rio)
+lp="https://github.com/KarolSilene/PROYECTO-FINAL-EN-R-/raw/master/V%20PART.xlsx"
+#descargando en carpeta actual
+download.file(lp, "file.xlsx")
+datacp= import(lp,na ="#N/A")
+
+
+l="https://github.com/KarolSilene/PROYECTO-FINAL-EN-R-/raw/master/V.POL.xlsx"
+datacp2=import(l, na="#N/A")
+
+str(datacp)
+datacp[,c(1:2)]=lapply(datacp[,c(1:2)], trimws,whitespace= "[\\h\\v]")
+datacp[,c(2)]=as.numeric(datacp[,c(2)])
+datacp=na.omit(datacp)
+
+str(datacp2)
+names(datacp2)[1]="Country"
+datacp2=na.omit(datacp2)
+
+culturapolitica=merge(datacp, datacp2, by.x="Country", by.y="Country")
+
+
+```
+
+Condiciones económicas:
+
+```{r}
+
+```
+
+
+
+
+
