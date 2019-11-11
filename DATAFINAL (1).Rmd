@@ -1,0 +1,209 @@
+
+TODAS LAS DATAS:
+```{r}
+datafin=merge(CountryStatus, GINIFIN, by.x="Country", "Country")
+DATAFINAL=merge(datafin, culturapolitica, by.x="Country", "Country")
+str(DATAFINAL)
+```
+
+Condiciones políticas:
+
+DATA: NIVEL DE LIBERTADES y DERECHOS POLÍTICOS
+
+```{r}
+library(rio)
+Link1="https://github.com/MYance19/BASES-PARCIAL-Y-FINAL/raw/master/Country%20and%20Territory%20Ratings%20and%20Statuses%20FIW1973-2018.xlsx"
+download.file(Link1,"file.xlsx")
+liberties= import_list("file.xlsx",rbind=FALSE)
+```
+
+```{r}
+CountryStatus=liberties[[2]]
+TerritoryRatings=liberties[[3]]
+```
+
+```{r}
+CountryStatus=CountryStatus[,-c(2:50)]
+CountryStatus=CountryStatus[,-c(2:50)]
+CountryStatus=CountryStatus[,-c(2:20)]
+CountryStatus=CountryStatus[,-c(2:13)]
+CountryStatus=CountryStatus[-c(1:2),]
+names(CountryStatus)= c('COUNTRY', '2016POLITICAL RIGHTS',"2016CIVIL LIBERTIES","2016FREEDOM STATUS",'2017POLITICAL RIGHTS',"2017CIVIL LIBERTIES","2017 FREEDOM STATUS")
+CountryStatus$`2016FREEDOM STATUS`=NULL
+CountryStatus$`2017 FREEDOM STATUS`=NULL
+CountryStatus[1:7]=lapply(CountryStatus[1:7], trimws,whitespace = "[\\h\\v]")
+CountryStatus[,-c(1,4,7)]=lapply(CountryStatus[,-c(1,4,7)], as.numeric)
+CountryStatus=na.omit(CountryStatus)
+row.names(CountryStatus)=CountryStatus$COUNTRY
+CountryStatus=CountryStatus[,-c(1)]
+str(CountryStatus)
+
+CountryStatus[,c(4)]=as.numeric(CountryStatus[,c(4)])
+CountryStatus=CountryStatus[,c(1,4:5)]
+```
+
+ACCOUNTABILITY, CONTROL DE CORRUPCIÓN, EFECTIVIDAD:
+```{r}
+
+library(rio)
+lp="https://github.com/KarolSilene/PROYECTO-FINAL-EN-R-/raw/master/V%20PART.xlsx"
+#descargando en carpeta actual
+download.file(lp, "file.xlsx")
+datacp= import(lp,na ="#N/A")
+
+
+l="https://github.com/KarolSilene/PROYECTO-FINAL-EN-R-/raw/master/V.POL.xlsx"
+datacp2=import(l, na="#N/A")
+
+str(datacp)
+datacp[,c(1:2)]=lapply(datacp[,c(1:2)], trimws,whitespace= "[\\h\\v]")
+datacp[,c(2)]=as.numeric(datacp[,c(2)])
+datacp=na.omit(datacp)
+
+str(datacp2)
+names(datacp2)[1]="Country"
+datacp2=na.omit(datacp2)
+
+culturapolitica=merge(datacp, datacp2, by.x="Country", by.y="Country")
+
+
+```
+
+Condiciones económicas:
+
+1. GINI
+```{r}
+link="http://hdr.undp.org/en/composite/IHDI#e"
+path= '/html/body/div[2]/div/section/div/div/div/div/div/table'
+GINI=htmltab(doc=link, which=path)
+str(GINI)
+
+```
+
+```{r}
+names(GINI)
+GINIFIN=GINI [,c(2,13,16)]
+nombres=c("Country", "InequalityIncome_Index", "Gini")
+names(GINIFIN)=nombres
+str(GINIFIN)
+GINIFIN[,c(2)]=lapply(GINIFIN[,c(2)],parse_number)
+GINIFIN[,c(2:3)]=lapply(GINIFIN[,c(2:3)],as.numeric)
+GINIFIN=GINIFIN[complete.cases(GINIFIN),]
+```
+
+2. POBREZA
+
+```{r}
+l="https://en.wikipedia.org/wiki/List_of_countries_by_percentage_of_population_living_in_poverty"
+v='//*[@id="mw-content-text"]/div/table[2]'
+
+pobreza=htmltab(doc=l, which=v)
+pobre=pobreza[,c(1:2)]
+
+na=c("Country", "Poverty (%)")
+names(pobre)=na
+
+str(pobre)
+pobre$`Poverty (%)`=str_split(pobre$`Poverty (%)`,pattern='%', simplify = T)[,1]
+pobre[,]=lapply(pobre[,], trimws,whitespace = "[\\h\\v]")
+
+pobre$`Poverty (%)`[pobre$`Poverty (%)`=="N/A"] <- NA
+
+
+pobre[,c(2)]=lapply(pobre[,c(2)], as.numeric)
+
+pobre=na.omit(pobre)
+
+str(pobre)
+pobre[,c(2)]=as.numeric(pobre[,c(2)])
+
+```
+
+
+
+```{r}
+inequidad=merge(GINIFIN,pobre,all.x=T,all.y=T) 
+inequidad$InequalityIncome_Index=NULL
+inequidad=na.omit(inequidad)
+```
+
+```{r}
+library(knitr)
+library(kableExtra)
+kable(inequidad[!complete.cases(inequidad),],type='html')%>%
+    kable_styling(bootstrap_options = c("striped", "hover", "condensed", "responsive"),
+                  font_size = 10)
+```
+
+```{r}
+# cambiemos a nombres usados por otra tabla:
+## en demo por happy
+GINIFIN[GINIFIN$Country=="Bolivia (Plurinational State of)",'Country']="Bolivia"
+pobre[pobre$Country=="Cape Verde",'Country']="Cabo Verde"
+pobre[pobre$Country=="Congo, Republic of the",'Country']="Congo"
+GINIFIN[GINIFIN$Country=="Congo (Democratic Republic of th",'Country']="República Democrática del Congo"
+pobre[pobre$Country=="Congo, Democratic Republic of the",'Country']="República Democrática del Congo"
+GINIFIN[GINIFIN$Country=="Czechia",'Country']="Czech Republic"
+GINIFIN[GINIFIN$Country=="Eswatini (Kingdom of)",'Country']="Eswatini"
+pobre[pobre$Country=="Gambia, The",'Country']="Gambia"	
+GINIFIN[GINIFIN$Country=="	Lao People's Democratic Republi",'Country']="Laos"
+GINIFIN[GINIFIN$Country=="Micronesia (Federated States of)",'Country']="Micronesia"
+GINIFIN[GINIFIN$Country=="Moldova (Republic of)",'Country']="Moldova"
+GINIFIN[GINIFIN$Country=="Palestine, State of",'Country']="Palestine"
+GINIFIN[GINIFIN$Country=="Russian",'Country']="Russia"
+pobre[pobre$Country=="São Tomé and Príncipe",'Country']="Sao Tome and Principe"
+GINIFIN[GINIFIN$Country=="Tanzania (United Republic of)",'Country']="Tanzania"
+GINIFIN[GINIFIN$Country=="Venezuela (Bolivarian Republic of)",'Country']="Venezuela"
+GINIFIN[GINIFIN$Country=="Viet Nam",'Country']="Vietnam"
+```
+
+GINI + WEALTH: QUE TIENE MAS EFECTO? LA RIQUEZA O POBREZA DE UN PAÍS O LA DESIGUALDAD EN LA DISTRIBUCION DE ESTOS INGRESOS?
+```{r}
+library(rio)
+k="https://github.com/marielahorna/Estad-stica-2/raw/master/global-wealth-2018-2019-2024.xlsx"
+wealth=import(k)
+
+riqueza=wealth[,c(1:2)]
+nom=c("Country", "Total Wealth")
+names(riqueza)= nom
+str(riqueza)
+
+riqueza=riqueza[-c(1),]
+riqueza=na.omit(riqueza)
+
+
+desigualdad=merge(GINIFIN, riqueza,all.x=T,all.y=T) 
+desigualdad=na.omit(desigualdad)
+
+library(knitr)
+library(kableExtra)
+kable(desigualdad[!complete.cases(desigualdad),],type='html')%>%
+    kable_styling(bootstrap_options = c("striped", "hover", "condensed", "responsive"),
+                  font_size = 10)
+```
+
+```{r}
+riqueza[riqueza$Country=="Congo, Dem. Rep.",'Country']="República Democrática del Congo"
+riqueza[riqueza$Country=="Congo, Rep.",'Country']="Congo"
+GINIFIN[GINIFIN$Country==" Cote d'Ivoire",'Country']="Cote d'Ivoire"
+GINIFIN[GINIFIN$Country=="Iran (Islamic Republic of)",'Country']="Iran"
+GINIFIN[GINIFIN$Country=="Korea (Republic of)",'Country']="Korea"
+GINIFIN[GINIFIN$Country=="Lao People's Democratic Republi",'Country']="Laos"
+
+riqueza[riqueza$Country=="	Cote d'Ivoire",'Country']="Cote d'Ivoire"
+GINIFIN[GINIFIN$Country=="Cote d'Ivoire",'Country']="Cote d'Ivoire"
+
+
+desigualdad=merge(GINIFIN, riqueza,by.x='Country',by.y='Country') 
+desigualdad=desigualdad[,c(1,3,4)]
+
+
+GINIFIN=GINIFIN[,c(1,3)]
+```
+
+
+
+
+
+
+
