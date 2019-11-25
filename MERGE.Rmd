@@ -1,0 +1,92 @@
+MERGE:
+
+```{r}
+library(rio)
+
+link="https://github.com/marielahorna/Trabajo-Estad-stica/raw/master/VARIABLES%20INDEPENDIENTES-IDEA.xlsx"
+#descargando en carpeta actual
+download.file(link, "file.xlsx")
+ind= import_list('file.xlsx',rbind = FALSE)
+
+pol=ind[[2]]
+pbi=ind[[3]]
+desempleo=ind[[4]]
+
+str(pol)
+str(pbi)
+pbi[,-c(1)]=as.numeric(pbi[,-c(1)])
+```
+
+```{r}
+str(desempleo)
+desempleo[,-c(1)]=as.numeric(desempleo[,-c(1)]) 
+```
+
+```{r}
+link="http://hdr.undp.org/en/composite/IHDI#e"
+path= '/html/body/div[2]/div/section/div/div/div/div/div/table'
+GINI=htmltab(doc=link, which=path)
+str(GINI)
+
+```
+
+```{r}
+names(GINI)
+GINIFIN=GINI [,c(2,16)]
+nombres=c("Country", "Gini")
+names(GINIFIN)=nombres
+str(GINIFIN)
+GINIFIN[,c(2)]=as.numeric(GINIFIN[,c(2)])
+GINIFIN=GINIFIN[complete.cases(GINIFIN),]
+```
+
+
+VARIABLE DEPENDIENTE:
+
+```{r}
+lo="https://github.com/marielahorna/Trabajo-Estad-stica/raw/master/data%20dependiente.xlsx"
+download.file(lo, "file.xlsx")
+dependiente= import_list('file.xlsx',rbind = FALSE)
+prot=dependiente[[1]]
+```
+
+LIMPIEZA:
+
+```{r}
+nrow(merge(pbi,desempleo))
+```
+
+Hagamos un nuevo merge, donde nos quedemos con TODOS los paises que no estab en uno u otro data frame: con "all.x, all.y"
+
+```{r}
+prueba1=merge(pbi,desempleo,all.x=T, all.y=T)
+```
+
+```{r}
+# formateando a 
+library(knitr)
+library(kableExtra)
+kable(prueba1[!complete.cases(prueba1),],type='html')%>%
+    kable_styling(bootstrap_options = c("striped", "hover", "condensed", "responsive"),
+                  font_size = 10)
+```
+
+RECODIFICAR:
+
+```{r}
+# cambiemos a nombres usados por otra tabla:
+## en demo por happy
+desempleo[desempleo$Country=="Gambia, The",'Country']="Gambia"
+demo[demo$Country=="Republic of the Congo",'Country']="Congo (Brazzaville)"
+demo[demo$Country=="Trinidad and Tobago",'Country']="Trinidad & Tobago"
+demo[demo$Country=="North Macedonia",'Country']="Macedonia"
+
+## en happy por demo
+happy[happy$Country=="Palestinian Territories",'Country']="Palestine"
+```
+
+MERGE:
+```{r}
+HappyDemo=merge(happy,demo, by.x='Country', by.y='Country') # re creando HappyDemo
+nrow(HappyDemo)
+```
