@@ -1,0 +1,59 @@
+
+
+```{r}
+link="http://hdr.undp.org/en/composite/IHDI#e"
+path= '/html/body/div[2]/div/section/div/div/div/div/div/table'
+library(htmltab)
+GINI=htmltab(doc=link, which=path)
+str(GINI)
+names(GINI)
+GINIFIN=GINI [,c(2,16)]
+nombres=c("Country", "Gini")
+names(GINIFIN)=nombres
+str(GINIFIN)
+GINIFIN[,c(2)]=as.numeric(GINIFIN[,c(2)])
+GINIFIN=GINIFIN[complete.cases(GINIFIN),]
+```
+
+```{r}
+#variable dependiente 
+library(rio)
+linkage="https://github.com/marielahorna/Trabajo-Estad-stica/raw/master/data%20dependiente.xlsx"
+download.file(linkage, "file.xlsx")
+dependiente= import_list('file.xlsx',rbind = FALSE)
+protesta=dependiente[[1]]
+names(protesta)= c("Country","Protestas")
+```
+
+```{r}
+nrow(merge(GINIFIN,protesta))
+```
+
+```{r}
+ejemplo=merge(GINIFIN,protesta,all.x=T, all.y=T)
+```
+
+```{r}
+library(knitr)
+library(kableExtra)
+kable(ejemplo[!complete.cases(ejemplo),],type='html')%>%
+    kable_styling(bootstrap_options = c("striped", "hover", "condensed", "responsive"),
+                  font_size = 10)
+```
+```{r}
+# cambiemos a nombres usados por otra tabla:
+## en demo por happy
+GINIFIN[GINIFIN$Country=="Bolivia (Plurinational State of)",'Country']="Bolivia"
+GINIFIN[GINIFIN$Country=="Russian Federation",'Country']="Russia"
+GINIFIN[GINIFIN$Country=="Moldova (Republic of)",'Country']="Moldova"
+GINIFIN[GINIFIN$Country=="Iran (Islamic Republic of)",'Country']="Iran"
+GINIFIN[GINIFIN$Country=="	Bosnia",'Country']="Bosnia and Herzegovina"
+GINIFIN[GINIFIN$Country=="Lao People's Democratic Republi",'Country']="Laos"
+GINIFIN[GINIFIN$Country=="Timor-Leste",'Country']="Timor Leste"
+GINIFIN[GINIFIN$Country=="Venezuela (Bolivarian Republic of)",'Country']="Venezuela"
+GINIFIN[GINIFIN$Country=="Viet Nam",'Country']="Vietnam"
+
+giniprot=merge(GINIFIN,protesta, by.x='Country', by.y='Country') 
+nrow(giniprot)
+```
+
