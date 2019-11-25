@@ -1,0 +1,131 @@
+
+```{r}
+ink="https://github.com/marielahorna/Trabajo-Estad-stica/raw/master/API_NY.GDP.PCAP.CD_DS2_en_excel_v2_511354.xls"
+
+library(rio)
+
+percapita=import(ink)
+str(percapita)
+pcp=percapita[c(1,8)]
+str(pcp)
+pcp=na.omit(pcp)
+names(pcp)[2]="PBI per capita"
+```
+
+```{r}
+Ginis
+str(Ginis)
+```
+
+```{r}
+nrow(merge(pcp, Ginis))
+economics=merge(pcp, Ginis, by.x='Country', by.y='Country')
+str(economics)
+
+nrow(merge(economics, desempleo))
+eco=merge(economics, desempleo, by.x='Country', by.y='Country')
+names(eco)[2]="PBI per capita"
+```
+
+1. Calculemos matriz de correlación:
+```{r}
+ecv=eco[,-c(1)] # sin los Scores ni nombre de país.
+
+# esta es:
+library(polycor)
+Matrix=polycor::hetcor(ecv)$correlations
+```
+
+2. Explorar correlaciones:
+
+Sin evaluar significancia:
+
+```{r}
+library(ggcorrplot)
+
+ggcorrplot(Matrix)
+```
+
+Evaluando significancia:
+
+```{r}
+ggcorrplot(Matrix,
+          p.mat = cor_pmat(Matrix),
+          insig = "blank")
+```
+Lo blanco significa que la relacion entre las variables es muy debil. Cuanto mas fuerte el color, mas fuerte la correlacion.
+
+Si puedes ver bloques correlacionados, hay esperanza de un buen analisis factorial. 
+
+
+3. Verificar si datos permiten factorizar: ¿puedo encontrar grupos entre las columnas? KMO te dice esto: observa si es hay clusters de variables. 
+A partir del 0,6 significa que sí se puede (mayor a 0,6 en el promedio (Overall MSA, no en cada variable)
+```{r}
+library(psych)
+psych::KMO(Matrix) #KMO de la matriz de correlacion: corMatrix
+```
+
+4. Verificar si la matriz de correlaciones es adecuada:
+
+Aqui hay dos pruebas:
+
+Hnula: La matriz de correlacion es una matriz identidad
+```{r}
+cortest.bartlett(Matrix,n=nrow(ecv))$p.value>0.05
+```
+
+Hnula: La matriz de correlacion es una matriz singular.
+```{r}
+library(matrixcalc)
+
+is.singular.matrix(Matrix)
+```
+
+Aquí yo quiero que siempre salga FALSE (si sale VERDADERO, “no debí hacer el factorial”. Igual si el kmo sale menor a 0,6)  
+
+
+5.Determinar en cuantos factores o variables latentes podríamos redimensionar la data:
+
+```{r}
+fa.parallel(ecv,fm = 'ML', fa = 'fa') 
+```
+
+Se sugieren 3, veamos:
+
+6. Redimensionar la tabla a un numero menor de factores (3 en este caso):
+
+Resultado inicial:
+
+```{r}
+library(GPArotation)
+resfa = fa(ecv,nfactors = ,cor = 'mixed',rotate = "varimax",fm="minres")
+```
+
+```{r}
+print(resfa$loadings)
+```
+
+El loading de resfa nos dice cuanto carga cada variable en los 3 factores que ha encontrado. Ahí se ve en cual de los 3, cada variable carga mejor (el mayor numero)
+
+
+Resultado mejorado: usamos cutoff para lograr que cada variable vaya a un solo de los factores encontrados, determinando con ello un punto de corte para que se muestren los loading mas signficativos:
+
+```{r}
+print(resfa$loadings,cutoff = 0.51) #cutoff sirve para que borre todo lo que sea menor a ...0,51 por ejemplo
+```
+
+Cuando logramos que cada variable se vaya a un factor, tenemos una estructura simple.
+
+Resultado visual:
+
+```{r}
+fa.diagram(resfa)
+```
+
+
+
+
+
+
+
+
