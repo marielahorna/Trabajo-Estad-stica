@@ -1,0 +1,26 @@
+```{r}
+library(rio)
+Link1="https://github.com/MYance19/BASES-PARCIAL-Y-FINAL/raw/master/Country%20and%20Territory%20Ratings%20and%20Statuses%20FIW1973-2018.xlsx"
+download.file(Link1,"file.xlsx")
+liberties= import_list("file.xlsx",rbind=FALSE)
+```
+```{r}
+
+CountryStatus=liberties[[2]]
+TerritoryRatings=liberties[[3]]
+```
+
+```{r}
+CountryStatus=CountryStatus[,-c(2:50)]
+CountryStatus=CountryStatus[,-c(2:50)]
+CountryStatus=CountryStatus[,-c(2:20)]
+CountryStatus=CountryStatus[,-c(17:19)]
+CountryStatus=CountryStatus[-c(1:2),]
+names(CountryStatus)= c('COUNTRY','2013POLITICAL RIGHTS' , "2013CIVIL LIBERTIES","2013FREEDOM STATUS",'2014POLITICAL RIGHTS' , "2014CIVIL LIBERTIES","2014FREEDOM STATUS",'2015POLITICAL RIGHTS' , "2015CIVIL LIBERTIES","2015FREEDOM STATUS",'2016POLITICAL RIGHTS',"2016CIVIL LIBERTIES","2016FREEDOM STATUS",'2017POLITICAL RIGHTS',"2017CIVIL LIBERTIES","2017 FREEDOM STATUS")
+CountryStatus[1:16]=lapply(CountryStatus[1:16], trimws,whitespace = "[\\h\\v]")
+CountryStatus[,-c(1,4,7,10,13,16)]=lapply(CountryStatus[,-c(1,4,7,10,13,16)], as.numeric)
+row.names(CountryStatus)=CountryStatus$COUNTRY
+CountryStatus=CountryStatus[,-c(1)]
+str(CountryStatus)
+```
+
