@@ -1,0 +1,437 @@
+MERGE:
+
+VARIABLES INDEPENDIENTES: 
+
+```{r}
+library(rio)
+
+link="https://github.com/marielahorna/Trabajo-Estad-stica/raw/master/VARIABLES%20INDEPENDIENTES-IDEA.xlsx"
+#descargando en carpeta actual
+download.file(link, "file.xlsx")
+ind= import_list('file.xlsx',rbind = FALSE)
+
+pol=ind[[2]]
+pbi=ind[[3]]
+desempleo=ind[[4]]
+
+str(pol)
+str(pbi)
+pbi[,-c(1)]=as.numeric(pbi[,-c(1)])
+```
+
+```{r}
+str(desempleo)
+desempleo[,-c(1)]=as.numeric(desempleo[,-c(1)]) 
+```
+
+```{r}
+link="http://hdr.undp.org/en/composite/IHDI#e"
+path= '/html/body/div[2]/div/section/div/div/div/div/div/table'
+GINI=htmltab(doc=link, which=path)
+str(GINI)
+
+```
+
+```{r}
+names(GINI)
+GINIFIN=GINI [,c(2,16)]
+nombres=c("Country", "Gini")
+names(GINIFIN)=nombres
+str(GINIFIN)
+GINIFIN[,c(2)]=as.numeric(GINIFIN[,c(2)])
+GINIFIN=GINIFIN[complete.cases(GINIFIN),]
+```
+
+
+VARIABLE DEPENDIENTE:
+
+```{r}
+lo="https://github.com/marielahorna/Trabajo-Estad-stica/raw/master/data%20dependiente.xlsx"
+download.file(lo, "file.xlsx")
+dependiente= import_list('file.xlsx',rbind = FALSE)
+prot=dependiente[[1]]
+```
+
+LIMPIEZA:
+
+```{r}
+str(pbi)
+pbi=pbi[-c(6,34,46,79,85:88,90,109,115:117,119:120, 122, 132, 135, 140, 149, 159, 161, 169, 173, 174:175, 180, 191, 193:194, 204, 205, 210, 212, 214, 215, 223, 232),]
+```
+
+```{r}
+str(desempleo)
+desempleo=desempleo[-c(4, 30, 43, 78:81, 83, 100, 106, 107, 108, 110:111, 113, 122, 124, 129, 137, 148, 155, 162, 168, 178, 180, 181, 190:191, 196, 198, 200:201, 208, 217),]
+
+desempleo[c(4),]
+desempleo$`Tasa de desempleo`[4]="2.11"
+
+desempleo[c(9),]
+desempleo$`Tasa de desempleo`[9]="5.02"
+
+desempleo[c(16),]
+desempleo$`Tasa de desempleo`[16]="1.03"
+
+desempleo[c(43),]
+desempleo$`Tasa de desempleo`[43]="4.08"
+
+desempleo[c(65),]
+desempleo$`Tasa de desempleo`[65]="9.01"
+
+desempleo[c(66),]
+desempleo$`Tasa de desempleo`[66]="23.12"
+
+desempleo[c(84),]
+desempleo$`Tasa de desempleo`[84]="14.03"
+
+desempleo[c(85),]
+desempleo$`Tasa de desempleo`[85]="3.07"
+
+desempleo[c(94),]
+desempleo$`Tasa de desempleo`[94]="2.12"
+
+desempleo[c(96),]
+desempleo$`Tasa de desempleo`[96]="22.04"
+
+desempleo[c(110),]
+desempleo$`Tasa de desempleo`[110]="5.01"
+
+desempleo[c(127),]
+desempleo$`Tasa de desempleo`[127]="5.09"
+
+desempleo[c(116),]
+desempleo$`Tasa de desempleo`[116]="7.06"
+
+desempleo[c(120),]
+desempleo$`Tasa de desempleo`[120]="14.08"
+
+desempleo[c(125),]
+desempleo$`Tasa de desempleo`[125]="4.11"
+
+desempleo[c(145),]
+desempleo$`Tasa de desempleo`[145]="1.05"
+
+desempleo[c(160),]
+desempleo$`Tasa de desempleo`[160]="7.11"
+
+desempleo[c(168),]
+desempleo$`Tasa de desempleo`[168]="3.11"
+
+desempleo[c(169),]
+desempleo$`Tasa de desempleo`[169]="1.05"
+
+desempleo[c(173),]
+desempleo$`Tasa de desempleo`[173]="2.04"
+
+desempleo[c(178),]
+desempleo$`Tasa de desempleo`[178]="5.12"
+
+str(desempleo)
+desempleo[,-c(1)]=as.numeric(desempleo[,-c(1)]) 
+```
+
+```{r}
+nrow(merge(pbi,desempleo))
+```
+
+Hagamos un nuevo merge, donde nos quedemos con TODOS los paises que no estab en uno u otro data frame: con "all.x, all.y"
+
+```{r}
+prueba1=merge(pbi,desempleo,all.x=T, all.y=T)
+```
+
+```{r}
+# formateando a 
+library(knitr)
+library(kableExtra)
+kable(prueba1[!complete.cases(prueba1),],type='html')%>%
+    kable_styling(bootstrap_options = c("striped", "hover", "condensed", "responsive"),
+                  font_size = 10)
+```
+
+RECODIFICAR:
+
+```{r}
+# cambiemos a nombres usados por otra tabla:
+desempleo[desempleo$Country=="Gambia, The",'Country']="Gambia"
+```
+
+MERGE:
+```{r}
+despbi=merge(desempleo,pbi, by.x='Country', by.y='Country')
+nrow(despbi)
+```
+
+VARIABLE POLITICA - MERGE 2
+```{r}
+library(rio)
+
+link="https://github.com/marielahorna/Trabajo-Estad-stica/raw/master/VARIABLES%20INDEPENDIENTES-IDEA.xlsx"
+#descargando en carpeta actual
+download.file(link, "file.xlsx")
+ind= import_list('file.xlsx',rbind = FALSE)
+
+pol=ind[[2]]
+str(pol)
+
+```
+
+```{r}
+names(pol)
+polfin=pol [,c(1:13)]
+nombres=c("Country", "C_A1")
+names(pol)=nombres
+str(polfin)
+polfin[,c(2)]=as.numeric(polfin[,c(2)])
+polfin=polfin[complete.cases(polfin),]
+names(polfin)= c("Country","C_A1", "C_SD11","C_SD12","C_SD13","C_SD14","C_A2","C_SD21","C_SD22","C_SD23","C_A3","C_A4","C_SD51" )
+polfin[,]=lapply(polfin[,],trimws,whitespace="[\\h\\v]")
+polfin[,-c(1)]=lapply(polfin[,-c(1)],as.numeric)
+```
+
+```{r}
+nrow(merge(despbi,polfin))
+```
+
+```{r}
+prueba2=merge(despbi,polfin,all.x=T, all.y=T)
+library(knitr)
+library(kableExtra)
+kable(prueba2[!complete.cases(prueba2),],type='html')%>%
+    kable_styling(bootstrap_options = c("striped", "hover", "condensed", "responsive"),
+                  font_size = 10)
+```
+```{r}
+polfin[polfin$Country=="Viet Nam",'Country']="Vietnam"
+despbi[despbi$Country=="Cote d'Ivoire",'Country']="Costa de Marfil"
+despbi[despbi$Country=="Kyrgyz Republic",'Country']="Kyrgyzstan"
+despbi[despbi$Country=="Iran, Islamic Rep.",'Country']="Iran"
+
+despbi[despbi$Country=="Slovak Republic",'Country']="Slovakia"
+
+despbi[despbi$Country=="Russian Federation",'Country']="Russia"
+
+despbi[despbi$Country=="Czech Republic",'Country']="Czechia"
+
+despbi[despbi$Country=="Congo, Dem. Rep.",'Country']="Democratic Republic of Congo"
+despbi[despbi$Country=="Congo, Rep.",'Country']="Congo"
+
+polfin[polfin$Country=="Democratic Republic of the Congo (DRC)",'Country']="Democratic Republic of Congo"
+polfin[polfin$Country=="Republic of Congo",'Country']="Congo"
+
+despbi[despbi$Country=="Lao PDR",'Country']="Laos"
+polfin[polfin$Country=="Laos",'Country']="Laos"
+
+despbi[despbi$Country=="Korea, Rep.",'Country']="South Korea"
+polfin[polfin$Country=="Republic of Korea",'Country']="South Korea"
+
+```
+
+```{r}
+datind=merge(despbi, polfin, by.x='Country', by.y='Country')
+```
+
+GINI
+
+```{r}
+link="http://hdr.undp.org/en/composite/IHDI#e"
+path= '/html/body/div[2]/div/section/div/div/div/div/div/table'
+library(htmltab)
+GINI=htmltab(doc=link, which=path)
+str(GINI)
+names(GINI)
+GINIFIN=GINI [,c(2,16)]
+nombres=c("Country", "Gini")
+names(GINIFIN)=nombres
+str(GINIFIN)
+GINIFIN[,c(2)]=as.numeric(GINIFIN[,c(2)])
+GINIFIN=GINIFIN[complete.cases(GINIFIN),]
+```
+
+```{r}
+#variable dependiente 
+library(rio)
+linkage="https://github.com/marielahorna/Trabajo-Estad-stica/raw/master/data%20dependiente.xlsx"
+download.file(linkage, "file.xlsx")
+dependiente= import_list('file.xlsx',rbind = FALSE)
+protesta=dependiente[[1]]
+names(protesta)= c("Country","Protestas")
+```
+
+```{r}
+nrow(merge(GINIFIN,protesta))
+```
+
+```{r}
+ejemplo=merge(GINIFIN,protesta,all.x=T, all.y=T)
+```
+
+```{r}
+library(knitr)
+library(kableExtra)
+kable(ejemplo[!complete.cases(ejemplo),],type='html')%>%
+    kable_styling(bootstrap_options = c("striped", "hover", "condensed", "responsive"),
+                  font_size = 10)
+```
+```{r}
+# cambiemos a nombres usados por otra tabla:
+## en demo por happy
+GINIFIN[GINIFIN$Country=="Bolivia (Plurinational State of)",'Country']="Bolivia"
+GINIFIN[GINIFIN$Country=="Russian Federation",'Country']="Russia"
+GINIFIN[GINIFIN$Country=="Moldova (Republic of)",'Country']="Moldova"
+GINIFIN[GINIFIN$Country=="Iran (Islamic Republic of)",'Country']="Iran"
+GINIFIN[GINIFIN$Country=="	Bosnia",'Country']="Bosnia and Herzegovina"
+GINIFIN[GINIFIN$Country=="Lao People's Democratic Republi",'Country']="Laos"
+GINIFIN[GINIFIN$Country=="Timor-Leste",'Country']="Timor Leste"
+GINIFIN[GINIFIN$Country=="Venezuela (Bolivarian Republic of)",'Country']="Venezuela"
+GINIFIN[GINIFIN$Country=="Viet Nam",'Country']="Vietnam"
+
+giniprot=merge(GINIFIN,protesta, by.x='Country', by.y='Country') 
+nrow(giniprot)
+```
+```{r}
+protesta[protesta$Country=="	Bosnia	",'Country']="Bosnia and Herzegovina"
+GINIFIN[GINIFIN$Country=="Bosnia and Herzegovina",'Country']="Bosnia and Herzegovina"
+```
+```{r}
+protesta[protesta$Country=="Cape Verde",'Country']="Cabo Verde"
+GINIFIN[GINIFIN$Country=="Cabo Verde",'Country']="Cabo Verde"
+```
+```{r}
+protesta[,c(1,2)]=lapply(protesta[,c(1,2)], trimws,whitespace = "[\\h\\v]") # no blanks
+GINIFIN[,c(1,2)]=lapply(GINIFIN[,c(1,2)], trimws,whitespace = "[\\h\\v]") # no blanks
+```
+
+```{r}
+protesta[protesta$Country=="Congo Brazzaville",'Country']="Congo"
+protesta[protesta$Country=="Congo Kinshasa",'Country']="Democratic Republic of Congo"
+GINIFIN[GINIFIN$Country=="Congo",'Country']="Congo"
+GINIFIN[GINIFIN$Country=="Congo (Democratic Republic of th",'Country']="Democratic Republic of Congo"
+```
+```{r}
+protesta[protesta$Country=="Czechoslovakia",'Country']="Czechia"
+GINIFIN[GINIFIN$Country=="Czechia",'Country']="Czechia"
+
+
+protesta[protesta$Country=="	Tanzania",'Country']="Tanzania"
+GINIFIN[GINIFIN$Country=="Tanzania (United Republic of)",'Country']="Tanzania"
+
+```
+```{r}
+giniprot=merge(GINIFIN,protesta, by.x='Country', by.y='Country') 
+nrow(giniprot)
+```
+```{r}
+protesta[protesta$Country=="Slovak Republic",'Country']="Slovakia"
+GINIFIN[GINIFIN$Country=="	Slovakia",'Country']="Slovakia"
+```
+```{r}
+giniprot=merge(GINIFIN,protesta, by.x='Country', by.y='Country') 
+nrow(giniprot)
+```
+
+```{r}
+library(rio)
+
+link="https://github.com/JhazminRios29/ESTADISTICATRABAJO/raw/master/GINI%20cont.xlsx"
+df= import(link)
+
+```
+
+```{r}
+names(df)[2]="Gini"
+```
+
+```{r}
+Ginis=rbind(GINIFIN,df)
+```
+
+```{r}
+str(Ginis)
+```
+```{r}
+Ginis[,c(1,2)]=lapply(Ginis[,c(1,2)], trimws,whitespace = "[\\h\\v]") # no blanks
+
+
+Ginis[,c(2)]=as.numeric(Ginis[,c(2)]) # a numerico
+```
+
+```{r}
+ejemplo2=merge(Ginis,protesta,all.x=T, all.y=T)
+```
+
+```{r}
+library(knitr)
+library(kableExtra)
+kable(ejemplo2[!complete.cases(ejemplo2),],type='html')%>%
+    kable_styling(bootstrap_options = c("striped", "hover", "condensed", "responsive"),
+                  font_size = 10)
+```
+
+```{r}
+Ginis[Ginis$Country=="Saudia Arabia",'Country']="Saudi Arabia"
+Ginis[Ginis$Country=="Korea (Republic of)",'Country']="South Korea"
+```
+
+```{r}
+giniprot=merge(Ginis,protesta, by.x='Country', by.y='Country') 
+nrow(giniprot)
+```
+
+MERGE FINAL
+
+```{r}
+ejemplo3=merge(giniprot, datind, all.x=T, all.y=T)
+nrow(merge(giniprot, datind))
+library(knitr)
+library(kableExtra)
+kable(ejemplo3[!complete.cases(ejemplo),],type='html')%>%
+    kable_styling(bootstrap_options = c("striped", "hover", "condensed", "responsive"),
+                  font_size = 10)
+
+```
+
+```{r}
+dataindependiente=merge(giniprot, datind, by.x='Country', by.y='Country')
+```
+
+```{r}
+library(rio)
+
+link="https://github.com/MYance19/TRABAJO-ESTADISTICA/raw/master/INCOME.xlsx"
+hdi= import(link)
+```
+
+```{r}
+hdi=hdi[,-c(2:6)]
+
+hdi[,c(1,2)]=lapply(hdi[,c(1,2)], trimws,whitespace = "[\\h\\v]") # no blanks
+hdi[,c(2)]=as.numeric(hdi[,c(2)])
+
+dataindependiente[,c(3)]=as.numeric(dataindependiente[,c(3)])
+str(dataindependiente)
+str(hdi)
+```
+
+```{r}
+ejemplo3=merge(dataindependiente,hdi,all.x=T, all.y=T)
+nrow(ejemplo3)
+```
+
+```{r}
+library(knitr)
+library(kableExtra)
+kable(ejemplo3[!complete.cases(ejemplo3),],type='html')%>%
+    kable_styling(bootstrap_options = c("striped", "hover", "condensed", "responsive"),
+                  font_size = 10)
+```
+```{r}
+hdi[hdi$Country=="Russian Federation",'Country']="Russia"
+hdi[hdi$Country=="Lao People's Democratic Republic",'Country']="Laos"
+```
+
+```{r}
+datafinal=merge(dataindependiente, hdi, by.x='Country', by.y='Country')
+datafinal
+```
+
