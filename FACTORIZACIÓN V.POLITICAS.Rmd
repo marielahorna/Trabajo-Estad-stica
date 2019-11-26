@@ -1,0 +1,83 @@
+```{r}
+library(rio)
+Link= "https://github.com/marielahorna/Trabajo-Estad-stica/raw/master/V.POL%20ACCOUNTABILITY.xlsx"
+DATA= import(Link)
+```
+
+```{r}
+data4= DATA[,-1]
+```
+
+```{r}
+library(polycor)
+corMatrix=polycor::hetcor(data4)$correlations
+library(ggcorrplot)
+
+ggcorrplot(corMatrix)
+
+```
+```{r}
+ggcorrplot(corMatrix,
+          p.mat = cor_pmat(corMatrix),
+          insig = "blank")
+```
+
+#variables de IDEA + variables del banco mundial (accountability, control de la corrupcion)
+```{r}
+#IDEA
+library(rio)
+linkIDEA= "https://github.com/marielahorna/Trabajo-Estad-stica/raw/master/V.I.%20PRUEBA.xlsx"
+IDEA= import(linkIDEA)
+
+```
+#cambiar nombre de la data
+
+```{r}
+names(DATA)[names(DATA)=='Countr']='País'
+```
+
+```{r}
+TOTAL=merge(DATA, IDEA)
+```
+
+#factorización
+```{r}
+data5= TOTAL[,-c(1,5,10,14:16)]
+library(polycor)
+corMatrix5=polycor::hetcor(data5)$correlations
+library(ggcorrplot)
+
+ggcorrplot(corMatrix5)
+```
+```{r}
+ggcorrplot(corMatrix5,
+          p.mat = cor_pmat(corMatrix5),
+          insig = "blank")
+```
+```{r}
+library(psych)
+psych::KMO(corMatrix5)
+cortest.bartlett(corMatrix5,n=nrow(data5))$p.value>0.05
+```
+
+```{r}
+library(matrixcalc)
+
+is.singular.matrix(corMatrix5)
+```
+```{r}
+fa.parallel(data5,fm = 'ML', fa = 'fa')  #2 latentes
+library(GPArotation)
+resfa5 <- fa(data5,nfactors = 2,cor = 'mixed',rotate = "varimax",fm="minres")
+```
+```{r}
+print(resfa5$loadings)
+```
+
+```{r}
+print(resfa5$loadings,cutoff = 0.51)
+```
+```{r}
+fa.diagram(resfa5)
+```
+
