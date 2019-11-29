@@ -1,0 +1,18 @@
+```{r}
+link="https://github.com/marielahorna/Trabajo-Estad-stica/raw/master/DATA%20TERMINADA.xlsx"
+dataindependiente=import(link)
+str(dataindependiente)
+```
+
+
+
+```{r}
+dataindependiente[,]=lapply(dataindependiente[,], trimws,whitespace = "[\\h\\v]") # no blanks
+dataindependiente[,-c(1)]=lapply(dataindependiente[,-c(1)],as.numeric)
+na.omit(dataindependiente)
+dataindependiente=dataindependiente[complete.cases(dataindependiente),]
+```
+```{r}
+str(dataindependiente)
+```
+
