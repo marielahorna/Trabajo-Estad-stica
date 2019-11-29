@@ -1,0 +1,167 @@
+
+1. CLUSTERIZACIÓN
+
+Variables de control (criterios): HDI y libertades 
+
+```{r}
+library(stringr)
+library(magrittr)
+library(htmltab)
+library(factoextra)
+library(cluster)
+dataindependiente
+str(dataindependiente)
+```
+
+```{r}
+row.names(dataindependiente)=dataindependiente$country
+dataclust=dataindependiente[,c(13,18)]
+```
+
+Calcular el número óptimo de clusters:
+
+```{r}
+fviz_nbclust(dataclust, pam,diss=g.dist,method = "gap_stat",k.max = 10,verbose = F)
+```
+
+```{r}
+fviz_nbclust(dataclust, hcut,diss=g.dist,method = "gap_stat",k.max = 10,verbose = F)
+```
+
+1. Calcular las distancias con daisy y las distancias gower: usar daisy en las dimensiones de interes 
+
+```{r}
+g.dist=daisy(dataclust, metric = "gower")
+```
+
+2. Proponer la cantidad de clusters: usemos 4 grupos, 4 clusters. Utilizo la funcion pam ()
+
+```{r}
+pam.resultado=pam(g.dist,4,cluster.only = F)
+
+#Crear una columna con los clusters:
+
+dataclust$clusterPT=pam.resultado$cluster
+```
+3. Explorar los resultados: saber las caracteristicas de los paises en cada cluster (media, mediana) o de las variables que crearon mi cluster. Para ello, usaremos aggregate con la funcion each (se necesita la biblioteca plyr)
+
+```{r}
+library(plyr)
+```
+
+```{r}
+library(plyr) # para funcion "each"..
+
+# nota el uso de as.matrix con cbind:
+aggregate(as.matrix(cbind(dataclust]))~ clusterPT, data=dataclust,
+          FUN=plyr::each(MD = median, Media = mean))
+```
+Veo que obtengo la media y mediana de cada variable que componen los clusters, según los mismos. 
+
+La tabla esta desordenada, así que la transformo en una data frame:
+
+1. Guardo el resultado de la funcion anterior en un objeto "agg"
+```{r}
+agg=aggregate(as.matrix(cbind(dataclust))~ clusterPT, data = dataclust, FUN = plyr::each(MD=median, Media=mean))
+```
+2. Convertir en data frame:
+```{r}
+tablaResumen=t(as.data.frame(agg))
+tablaResumen
+```
+
+Para que se vea mejor estéticamente, uso la función kable():
+```{r}
+library(knitr)
+library(kableExtra)
+kable(tablaResumen, format = "html", digits = 2) %>%kable_styling()
+```
+
+4. Comparar:
+
+ver las frecuencias de los clusters y el tipo de regímen:
+```{r}
+table(dataclust$clusterPT,dataclust$ScoreCut) 
+```
+```{r}
+table(demo$clusterPT,demo$Regimetype,dnn = c('clusterPT','TipoEconomist')) #dnn indica cómo llamar o rotular a cada columna que se pide: 'clusterPT' el mismo nombre y 'TipoEconomist' a regimetype
+```
+
+Veo que el cluster 1 agrupo a todas las democracias plenas y las junto con 21 democracias debiles. Dejó entrar a:
+
+```{r}
+dataclust[dataclust$clusterPT==4 & dataclust$ScoreCut=="(0.8,0.95]",'Country']
+```
+
+5. Visualizar:
+
+Para obtener el clusterplot:
+
+Uso la libreria factoextra
+```{r}
+library(factoextra)
+```
+Con la funcion fviz_cluster()
+```{r}
+fviz_cluster(object= list(data=g.dist, cluster= dataclust$clusterPT), geom= c("text"), ellipse.type = "convex")
+```
+
+Para una mejor grafica con la librería ggrepel:
+
+```{r}
+library(ggrepel)
+
+fviz_cluster(object = list(data=g.dist, cluster=dataclust$clusterPT), geom = c("text"), ellipse= FALSE, labelsize = 5, repel = T)
+```
+
+
+Intervalos:
+
+PASO 1: sacar los descriptivos de una columna, el Score (puntaje de la tabla):
+
+```{r}
+summary(dataclust)
+```
+
+PASO 2: determinar los maximos y minimos del indice usado para la tabla:la escala del score (0-10) Aparecen en el reporte
+
+PASO 3: crear los intervalos según el ANCHO de cada uno: dividir en 4 del 0 al 10, o sea: 0, 2.5, 5, 7.5, 10
+
+Para ello, usar cut(), que sirve para cortar en 4 partes, incluyendo el máximo y el mínimo 
+```{r}
+#puntos de corte
+CORTES=c(0,0.550,0.699,0.800, 0.9500)
+
+#cortar y crear una nueva variable:
+
+dataclust$ScoreCut=cut(dataclust$hdi, breaks = CORTES, ordered_result = TRUE)
+
+```
+
+INTENTO 2:
+
+```{r}
+K="https://github.com/marielahorna/Trabajo-Estad-stica/raw/master/DATA%20LIBERTADES%20XD.xlsx"
+LIB=import(K)
+nom=c("country", "PR", "CL")
+names(LIB)=nom
+str(LIB)
+LIB=na.omit(LIB)
+tabla=merge(dataindependiente, LIB, by.x = "country", by.y = "country")
+row.names=tabla$country
+str(tabla)
+```
+
+```{r}
+fviz_nbclust(tabla[,c(18,19,20)], pam,diss=g.dist,method = "gap_stat",k.max = 10,verbose = F)
+```
+
+PAM:
+
+```{r}
+
+```
+
+
+
+
