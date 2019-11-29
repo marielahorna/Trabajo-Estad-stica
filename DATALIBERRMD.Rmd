@@ -1,0 +1,19 @@
+```{r}
+link="https://github.com/marielahorna/Trabajo-Estad-stica/raw/master/DATA%20LIBERTADES%20XD.xlsx"
+dataLIBER=import(link)
+str(dataLIBER)
+```
+```{r}
+dataLIBER[,]=lapply(dataLIBER[,], trimws,whitespace = "[\\h\\v]") # no blanks
+dataLIBER[,-c(1)]=lapply(dataLIBER[,-c(1)],as.numeric)
+na.omit(dataLIBER)
+dataLIBER=dataLIBER[complete.cases(dataLIBER),]
+```
+```{r}
+names(dataLIBER)[1]="Country"
+```
+
+```{r}
+str(dataLIBER)
+```
+
