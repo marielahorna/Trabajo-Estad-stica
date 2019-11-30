@@ -1,0 +1,119 @@
+REGRESION POISSON POR CLUSTERS 
+
+```{r}
+library(rio)
+
+link="https://github.com/marielahorna/Trabajo-Estad-stica/raw/master/DATAFRAMES.xlsx"
+#descargando en carpeta actual
+download.file(link, "file.xlsx")
+dataclust= import_list('file.xlsx',rbind = FALSE)
+
+clust1=dataclust[[1]]
+clust2=dataclust[[2]]
+clust3=dataclust[[3]]
+clust4=dataclust[[4]]
+str(clust1)
+
+
+```
+
+```{r}
+clust1=clust1[,-c(7:10)]
+clust1=clust1[,-c(8,10)]
+clust2=clust2[,-c(7:10)]
+clust2=clust2[,-c(8,10)]
+clust3=clust3[,-c(7:10)]
+clust3=clust3[,-c(8,10)]
+clust4=clust4[,-c(7:10)]
+clust4=clust4[,-c(8,10)]
+```
+
+REGRESION POISSON CLUSTER 1 
+```{r}
+C1=clust1[2:7]
+C2=clust1[9:11]
+p1=merge (C1, C2)
+names (p1)[4] = "Tasadesempleo"
+names (p1)[2] = "percapita"
+```
+
+```{r}
+prot_poisson=glm(protestas~.,family = poisson, data=p1)
+summary(prot_poisson)
+```
+
+```{r}
+exp(confint(prot_poisson))
+```
+```{r}
+library(AER)
+AER::dispersiontest(prot_poisson,trafo=1)
+```
+
+REGRESION POISSON CLUSTER 2
+```{r}
+C3=clust2[2:7]
+C4=clust2[9:11]
+p2=merge (C3, C4)
+names (p2)[4] = "Tasadesempleo"
+names (p2)[2] = "percapita"
+```
+
+```{r}
+prot_poisson1=glm(protestas~.,family = poisson, data=p2)
+summary(prot_poisson1)
+```
+
+```{r}
+exp(confint(prot_poisson1))
+```
+
+```{r}
+library(AER)
+AER::dispersiontest(prot_poisson1,trafo=1)
+```
+REGRESION POISSON CLUSTER 
+```{r}
+C5=clust3[2:7]
+C6=clust3[9:11]
+p3=merge (C5, C6)
+names (p3)[4] = "Tasadesempleo"
+names (p3)[2] = "percapita"
+```
+
+```{r}
+prot_poisson2=glm(protestas~.,family = poisson, data=p3)
+summary(prot_poisson2)
+```
+
+```{r}
+exp(confint(prot_poisson2))
+```
+
+```{r}
+library(AER)
+AER::dispersiontest(prot_poisson2,trafo=1)
+```
+
+REGRESION POISSON CLUSTER 4 
+```{r}
+C7=clust4[2:7]
+C8=clust4[9:11]
+p4=merge (C7, C8)
+names (p4)[4] = "Tasadesempleo"
+names (p4)[2] = "percapita"
+```
+
+```{r}
+prot_poisson3=glm(protestas~.,family = poisson, data=p4)
+summary(prot_poisson3)
+```
+
+```{r}
+exp(confint(prot_poisson3))
+```
+
+```{r}
+library(AER)
+AER::dispersiontest(prot_poisson3,trafo=1)
+```
