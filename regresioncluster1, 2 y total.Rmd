@@ -1,0 +1,117 @@
+```{r}
+library(rio)
+
+link="https://github.com/marielahorna/Trabajo-Estad-stica/raw/master/DATAFRAMES.xlsx"
+#descargando en carpeta actual
+download.file(link, "file.xlsx")
+dataclust= import_list('file.xlsx',rbind = FALSE)
+
+clust1=dataclust[[1]]
+clust2=dataclust[[2]]
+clust3=dataclust[[3]]
+clust4=dataclust[[4]]
+str(clust1)
+
+```
+```{r}
+clust1=clust1[,-c(7:10)]
+clust1=clust1[,-c(8,10)]
+clust2=clust2[,-c(7:10)]
+clust2=clust2[,-c(8,10)]
+clust3=clust3[,-c(7:10)]
+clust3=clust3[,-c(8,10)]
+clust4=clust4[,-c(7:10)]
+clust4=clust4[,-c(8,10)]
+```
+
+```{r}
+C1=clust1[2:7]
+C2=clust1[9:11]
+cluster1=merge (C1, C2)
+names (cluster1)[4] = "Tasadesempleo"
+names (cluster1)[2] = "percapita"
+
+```
+
+```{r}
+modelo1=formula(protestas~gini)
+modelo2= formula(protestas ~ percapita+  gini + Tasadesempleo+C_A1+C_A2+C_A3+C_A4+C_SD51)
+```
+
+```{r, results='asis'}
+library(stargazer)
+intento=lm(modelo1,data=cluster1)
+stargazer(intento,type = "html",intercept.bottom = FALSE)
+summary(intento)
+```
+```{r, results='asis'}
+library(stargazer)
+intento=lm(modelo2,data=cluster1)
+stargazer(intento,type = "html",intercept.bottom = FALSE)
+summary(intento)
+```
+
+```{r, results='asis'}
+library(stargazer)
+intento=lm(modelo1,data=cluster1)
+stargazer(intento,type = "html",intercept.bottom = FALSE)
+```
+
+```{r, results='asis'}
+library(stargazer)
+intento=lm(modelo1,data=cluster1)
+stargazer(intento,type = "html",intercept.bottom = FALSE)
+```
+
+```{r}
+C3=clust2[2:7]
+C4=clust2[9:11]
+cluster2=merge (C1, C2)
+names (cluster2)[4] = "Tasadesempleo"
+names (cluster2)[2] = "percapita"
+```
+
+
+```{r}
+
+modelo3= formula(protestas ~ percapita+  gini + Tasadesempleo+C_A1+C_A2+C_A3+C_A4+C_SD51)
+```
+
+```{r, results='asis'}
+library(stargazer)
+intento1=lm(modelo3,data=cluster2)
+stargazer(intento1,type = "html",intercept.bottom = FALSE)
+summary(intento1)
+```
+
+```{r}
+library(rio)
+
+link="https://github.com/marielahorna/Trabajo-Estad-stica/raw/master/DATA%20TERMINADA.xlsx"
+dataindependiente=import(link)
+str(dataindependiente)
+dataindependiente[,]=lapply(dataindependiente[,], trimws,whitespace = "[\\h\\v]") # no blanks
+dataindependiente[,-c(1)]=lapply(dataindependiente[,-c(1)],as.numeric)
+na.omit(dataindependiente)
+dataindependiente=dataindependiente[complete.cases(dataindependiente),]
+mezcla1=dataindependiente[2:6]
+mezcla2=dataindependiente[11:17]
+str(mezcla2)
+regresiontotal=merge(mezcla1,  mezcla2)
+regresiontotal=regresiontotal[,-c(7)]
+regresiontotal=regresiontotal[,-c(8)]
+names (regresiontotal)[4] = "Tasadesempleo"
+names (regresiontotal)[2] = "percapita"
+str(regresiontotal)
+```
+```{r}
+modelo4= formula(protestas ~ percapita+  gini + Tasadesempleo+C_A1+C_A2+C_A3+C_A4+C_SD51)
+```
+
+```{r, results='asis'}
+library(stargazer)
+intento2=lm(modelo4,data=regresiontotal)
+stargazer(intento2,type = "html",intercept.bottom = FALSE)
+summary(intento2)
+```
+
