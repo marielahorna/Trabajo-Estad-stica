@@ -1,0 +1,201 @@
+CLUSTERS FINAL
+
+Variables de control (criterios): HDI y libertades 
+
+```{r}
+library(htmltab)
+library(factoextra)
+library(cluster)
+dataindependiente
+str(dataindependiente)
+```
+
+Intervalo de HDI:
+
+```{r}
+summary(dataindependiente)
+```
+
+```{r}
+#puntos de corte
+CORTES=c(0,0.550,0.699,0.799, 0.9500)
+
+#cortar y crear una nueva variable:
+
+dataindependiente$ScoreCut=cut(dataindependiente$hdi, breaks = CORTES, ordered_result = TRUE)
+```
+
+```{r}
+row.names(dataindependiente)=dataindependiente$country
+```
+
+Calcular el número óptimo de clusters:
+
+```{r}
+fviz_nbclust(dataindependiente[,c(13,18)], pam,diss=g.dist,method = "gap_stat",k.max = 10,verbose = F)
+```
+
+```{r}
+fviz_nbclust(dataindependiente[,c(13,18)], hcut,diss=g.dist,method = "gap_stat",k.max = 10,verbose = F)
+```
+
+1. Calcular las distancias con daisy y las distancias gower: usar daisy en las dimensiones de interes 
+
+```{r}
+g.dist=daisy(dataindependiente[,c(13,18)], metric = "gower")
+```
+
+2. Proponer la cantidad de clusters: usemos 4 grupos, 4 clusters. Utilizo la funcion pam ()
+
+```{r}
+pam.resultado=pam(g.dist,4,cluster.only = F)
+
+#Crear una columna con los clusters:
+
+dataindependiente$clusterPT=pam.resultado$cluster
+```
+
+
+```{r}
+library(plyr) # para funcion "each"..
+
+# nota el uso de as.matrix con cbind:
+aggregate(as.matrix(cbind(dataindependiente[,c(13,18)]))~ clusterPT, data=dataindependiente,
+          FUN=plyr::each(MD = median, Media = mean))
+```
+Veo que obtengo la media y mediana de cada variable que componen los clusters, según los mismos. 
+
+La tabla esta desordenada, así que la transformo en una data frame:
+
+1. Guardo el resultado de la funcion anterior en un objeto "agg"
+```{r}
+agg=aggregate(as.matrix(cbind(dataindependiente[,c(13,18)]))~ clusterPT, data = dataindependiente, FUN = plyr::each(MD=median, Media=mean))
+```
+2. Convertir en data frame:
+```{r}
+tablaResumen=t(as.data.frame(agg))
+tablaResumen
+```
+
+Para que se vea mejor estéticamente, uso la función kable():
+```{r}
+library(knitr)
+library(kableExtra)
+kable(tablaResumen, format = "html", digits = 2) %>%kable_styling()
+```
+
+
+```{r}
+table(dataindependiente$clusterPT,dataclust$ScoreCut) 
+```
+
+```{r}
+dataindependiente[dataindependiente$clusterPT==1 & dataclust$ScoreCut=="(0,0.55]",'country']
+```
+
+5. Visualizar:
+
+Para obtener el clusterplot:
+
+Uso la libreria factoextra
+```{r}
+library(factoextra)
+```
+Con la funcion fviz_cluster()
+```{r}
+fviz_cluster(object= list(data=g.dist, cluster= dataindependiente$clusterPT), geom= c("text"), ellipse.type = "convex")
+```
+
+Para una mejor grafica con la librería ggrepel:
+
+```{r}
+library(ggrepel)
+
+fviz_cluster(object = list(data=g.dist, cluster=dataindependiente$clusterPT), geom = c("text"), ellipse= FALSE, labelsize = 5, repel = T)
+```
+
+COMPARANDO CON JERARQUIZANTE AGLOMERATIVO Y DIANA
+
+```{r}
+##ESTRATEGIA AGLOMERATIVA
+
+g.dist1= daisy(dataindependiente[,c(13,18)], metric="gower")
+```
+
+
+```{r}
+#calculando clusters
+
+library(factoextra)
+res.agnes<- hcut(g.dist1, k = 4,hc_func='agnes',hc_method = "ward.D")
+dataindependiente$clustAG=res.agnes$cluster
+
+##diana
+res.diana <- hcut(g.dist1, k = 4,hc_func='diana')
+dataindependiente$clustDIV=res.diana$cluster
+```
+
+```{r}
+#VISUALIZANDO
+fviz_dend(res.agnes,k=4, cex = 0.7, horiz = T)
+```
+
+
+```{r}
+fviz_dend(res.diana, cex = 0.7,horiz = T)
+```
+
+COMPARAR: ¿Cuál es mejor?
+
+```{r}
+fviz_silhouette(pam.resultado)
+```
+
+
+```{r}
+fviz_silhouette(res.agnes)
+```
+
+```{r}
+fviz_silhouette(res.diana)
+```
+
+#PAM nos da un mejor resultado, pues su widht es mayor.
+
+```{r}
+poorPAM=data.frame(pam.resultado$silinfo$widths)
+poorPAM$country=row.names(poorPAM)
+poorPAMcases=poorPAM[poorPAM$sil_width<0,'country']
+poorPAMcases
+```
+
+```{r}
+poorAGNES=data.frame(res.agnes$silinfo$widths)
+poorAGNES$country=row.names(poorAGNES)
+poorAGNEScases=poorAGNES[poorAGNES$sil_width<0,'country']
+poorAGNEScases
+```
+
+```{r}
+poorDIANA=data.frame(res.diana$silinfo$widths)
+poorDIANA$country=row.names(poorDIANA)
+poorDIANAcases=poorDIANA[poorDIANA$sil_width<0,'country']
+poorDIANAcases
+```
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
