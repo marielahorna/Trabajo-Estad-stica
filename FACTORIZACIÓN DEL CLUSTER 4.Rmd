@@ -1,0 +1,87 @@
+```{r}
+library(rio)
+MA= "https://github.com/marielahorna/Trabajo-Estad-stica/raw/master/DATAFRAMES.xlsx"
+#descargando en carpeta actual
+download.file(MA, "file.xlsx")
+d= import_list('file.xlsx',rbind = FALSE)
+
+d1=d[[1]]
+d2=d[[2]]
+d3=d[[3]]
+d4=d[[4]]
+
+
+```
+#Elimino los scores
+```{r}
+str(d4)
+TheData= d4[,c(2:6,11,15:17)]
+```
+```{r}
+names(TheData)[names(TheData)=="per capita"]="percapita" 
+names(TheData)[names(TheData)=="tasa de desempleo"]="tasadedesempleo" 
+```
+
+#fórmulas  para los modelos
+
+```{r}
+modelo1=formula(protestas ~ percapita+ gini+ tasadedesempleo+C_A1+C_A2+C_A3+ C_A4+ C_SD51 )
+```
+
+#cuadros de resumen
+```{r, results='asis'}
+library(stargazer)
+reg1=lm(modelo1,data=TheData)
+stargazer(reg1,type = "html",intercept.bottom = FALSE)
+```
+
+#Factorización para hallar el índice político: 
+```{r}
+library(polycor)
+corMatrixD=polycor::hetcor(TheData)$correlations
+library(ggcorrplot)
+
+ggcorrplot(corMatrixD)
+```
+```{r}
+ggcorrplot(corMatrixD,
+          p.mat = cor_pmat(corMatrixD),
+          insig = "blank")
+```
+```{r}
+library(psych)
+psych::KMO(corMatrixD) 
+```
+
+```{r}
+cortest.bartlett(corMatrixD,n=nrow(TheData))$p.value>0.05
+```
+```{r}
+library(matrixcalc)
+
+is.singular.matrix(corMatrixD)
+```
+
+```{r}
+fa.parallel(TheData,fm = 'ML', fa = 'fa')
+str(TheData)
+```
+```{r}
+library(GPArotation)
+resfaD <- fa(TheData,nfactors = 1,cor = 'mixed',rotate = "varimax",fm="minres")
+```
+
+```{r}
+print(resfaD$loadings)
+```
+
+```{r}
+print(resfaD$loadings,cutoff = 0.51)
+```
+```{r}
+fa.diagram(resfaD)
+```
+```{r}
+
+```
+
