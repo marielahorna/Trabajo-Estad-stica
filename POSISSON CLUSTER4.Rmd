@@ -1,0 +1,37 @@
+```{r}
+library(rio)
+
+link="https://github.com/marielahorna/Trabajo-Estad-stica/raw/master/CLUSTERSPOCOYO.xlsx"
+#descargando en carpeta actual
+download.file(link, "file.xlsx")
+datacluster= import_list('file.xlsx',rbind = FALSE)
+
+cluster1=datacluster[[1]]
+cluster2=datacluster[[2]]
+cluster3=datacluster[[3]]
+cluster4=datacluster[[4]]
+str(cluster1)
+
+
+```
+REGRESION POISSON CLUSTER 4 
+```{r}
+C1=cluster4[2:5]
+C2=cluster4[8]
+p4=merge (C1, C2)
+p4=cluster4[,c(2:5,8)]
+```
+
+```{r}
+prot_poisson4=glm(protestas~.,family = poisson, data=p4)
+summary(prot_poisson4)
+```
+
+```{r}
+exp(confint(prot_poisson4))
+```
+
+```{r}
+library(AER)
+AER::dispersiontest(prot_poisson4,trafo=1)
+```
