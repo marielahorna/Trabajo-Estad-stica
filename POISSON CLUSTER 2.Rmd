@@ -1,0 +1,41 @@
+REGRESION POISSON POR CLUSTERS 
+
+```{r}
+library(rio)
+
+link="https://github.com/marielahorna/Trabajo-Estad-stica/raw/master/CLUSTERSPOCOYO.xlsx"
+#descargando en carpeta actual
+download.file(link, "file.xlsx")
+dataclust= import_list('file.xlsx',rbind = FALSE)
+
+clust1=dataclust[[1]]
+clust2=dataclust[[2]]
+clust3=dataclust[[3]]
+clust4=dataclust[[4]]
+str(clust1)
+
+
+```
+
+
+
+REGRESION POISSON CLUSTER 2
+```{r}
+C1=clust2[2:5]
+C2=clust2[8]
+p2= clust2[,c(2:5,8)]
+```
+
+```{r}
+prot_poisson=glm(protestas~.,family = poisson, data=p2)
+summary(prot_poisson)
+```
+
+```{r}
+exp(confint(prot_poisson))
+```
+```{r}
+library(AER)
+AER::dispersiontest(prot_poisson,trafo=1)
+```
+
