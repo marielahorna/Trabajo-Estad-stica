@@ -1,0 +1,199 @@
+Factorización: 
+
+Indíce de democracia o la suma de las condiciones políticas--> índice de variables postmateriales 
+```{r}
+library(rio)
+link="https://github.com/marielahorna/Trabajo-Estad-stica/raw/master/DATA%20TERMINADA.xlsx"
+dataindependiente=import(link)
+str(dataindependiente)
+```
+
+
+
+```{r}
+dataindependiente[,]=lapply(dataindependiente[,], trimws,whitespace = "[\\h\\v]") # no blanks
+dataindependiente[,-c(1)]=lapply(dataindependiente[,-c(1)],as.numeric)
+na.omit(dataindependiente)
+dataindependiente=dataindependiente[complete.cases(dataindependiente),]
+```
+1. Calculemos matriz de correlación:
+```{r}
+str(dataindependiente)
+facdata=dataindependiente[,c(6:10)]
+
+library(polycor)
+corMatrix=polycor::hetcor(facdata)$correlations
+```
+
+2. Explorar correlaciones:
+
+```{r}
+library(ggcorrplot)
+
+ggcorrplot(corMatrix)
+```
+
+Evaluando significancia:
+
+```{r}
+ggcorrplot(corMatrix,
+          p.mat = cor_pmat(corMatrix),
+          insig = "blank")
+```
+
+3. Verificar si datos permiten factorizar: 
+```{r}
+library(psych)
+psych::KMO(corMatrix) #KMO de la matriz de correlacion: corMatrix
+```
+
+4. Verificar si la matriz de correlaciones es adecuada:
+
+Aqui hay dos pruebas:
+
+Hnula: La matriz de correlacion es una matriz identidad
+```{r}
+cortest.bartlett(corMatrix,n=nrow(facdata))$p.value>0.05
+```
+
+Hnula: La matriz de correlacion es una matriz singular.
+```{r}
+library(matrixcalc)
+
+is.singular.matrix(corMatrix)
+```
+
+5.Determinar en cuantos factores o variables latentes podríamos redimensionar la data:
+
+```{r}
+fa.parallel(facdata,fm = 'ML', fa = 'fa') 
+```
+
+6. Redimensionar la tabla a un numero menor de factores (3 en este caso):
+
+Resultado inicial:
+
+```{r}
+library(GPArotation)
+resfa = fa(facdata,nfactors = 1,cor = 'mixed',rotate = "varimax",fm="minres")
+```
+
+```{r}
+print(resfa$loadings)
+```
+
+```{r}
+print(resfa$loadings,cutoff = 0.50) #cutoff sirve para que borre todo lo que sea menor a ...0,51 por ejemplo
+```
+
+Cuando logramos que cada variable se vaya a un factor, tenemos una estructura simple.
+
+Resultado visual:
+
+```{r}
+fa.diagram(resfa)
+```
+
+7. Evaluando Resultado obtenido:
+```{r}
+#La Raíz del error cuadrático medio corregida está cerca a cero? (menor a 0,1 decimos que está cerca a 0)
+resfa$crms
+
+#La Raíz del error cuadrático medio de aproximación es menor a 0.05? Me dará un IC
+resfa$RMSEA
+
+#El índice de Tucker-Lewis es mayor a 0.9?
+resfa$TLI
+
+#Que variables aportaron mas a los factores? (ver el mayor numero)
+sort(resfa$communality)
+
+#Que variables contribuyen a mas de un factor? O sea, las que puntuan a partir de 2
+sort(resfa$complexity)
+```
+
+8. Posibles valores proyectados: dar nombres en una nueva data
+
+```{r}
+#ver como sería como data el resfa y sus scores (los nuevos factores)
+as.data.frame(resfa$scores)
+#convertir en una nueva data frame, junto con la columna Country de la data anterior
+pol=cbind(dataindependiente[1],as.data.frame(resfa$scores))
+
+#el gráfico:
+library(plotly)
+plot_ly(data=pol, x = ~MR1, text=~country) %>%
+  add_markers() %>%
+  layout(scene = list(xaxis = list(title = 'Demo')  
+```
+
+Confirmativa:
+
+```{r}
+model='postmateriales =~ C_A1, C_A2, C_A3, C_A4, C_SD51'
+```
+
+```{r}
+# normalizar las variables:
+facdata=scale(facdata[,-1])
+
+library(lavaan)
+```
+
+```{r}
+cfa_fit = cfa(model, data=facdata, 
+           std.lv=TRUE,  
+           missing="fiml")
+```
+```{r}
+allParamCFA=parameterEstimates(cfa_fit,standardized = T)
+allFitCFA=as.list(fitMeasures(cfa_fit))
+```
+
+```{r}
+library(knitr)
+kable(allParamCFA[allParamCFA$op=="=~",])
+```
+
+```{r}
+#El ChiSquare es NO significativo (p_value debe ser mayor a 0.05 para que sea bueno)?
+allFitCFA[c("chisq", "df", "pvalue")] # pvalue>0.05
+```
+
+```{r}
+#El Índice Tucker Lewi es mayor a 0.9?
+allFitCFA$tli # > 0.90
+```
+
+```{r}
+La Raíz del error cuadrático medio de aproximación es menor a 0.05?
+allFitCFA[c('rmsea.ci.lower','rmsea' ,'rmsea.ci.upper')] # 0.05 en el Int de Conf?
+```
+
+```{r}
+#Ya sabemos que no hay buen augurio.
+
+#Añadimos los índices a la data de indicadores:
+
+HappyDemo=as.data.frame(cbind(HappyDemo,lavPredict(cfa_fit)))
+
+#Veamos un resumen:
+
+summary(HappyDemo)
+```
+
+Ahora podemos correr una regresión con los índices:
+
+```{r}
+summary(lm(democracia~tranquilidad+bienestar,data = HappyDemo))
+
+```
+
+MERGE DEL INDICE NUEVO CON LA DATA:
+
+```{r}
+test=merge(dataindependiente, pol, by.x = "country", by.y="country")
+str(test)
+```
+
+
