@@ -1,0 +1,573 @@
+
+PROYECTO: LA GOTA QUE DERRAMÓ EL VASO 
+
+1. DATA
+```{r}
+library(rio)
+link="https://github.com/marielahorna/Trabajo-Estad-stica/raw/master/DATA%20TERMINADA.xlsx"
+datafin=import(link)
+str(datafin)
+```
+
+
+```{r}
+datafin[,]=lapply(datafin[,], trimws,whitespace = "[\\h\\v]") # no blanks
+datafin[,-c(1)]=lapply(datafin[,-c(1)],as.numeric)
+na.omit(datafin)
+datafin=datafin[complete.cases(datafin),]
+datafin$C_SD11=NULL
+datafin$C_SD12=NULL
+datafin$C_SD13=NULL
+datafin$C_SD14=NULL
+datafin$C_SD11=NULL
+datafin$C_SD21=NULL
+datafin$C_SD23=NULL
+row.names(datafin)=datafin$country
+```
+
+
+2. CLUSTERIZACIÓN: VARIABLES DE CONTROL
+
+Variables de control: HDI y libertades 
+
+```{r}
+library(factoextra)
+library(cluster)
+str(datafin)
+```
+
+Calcular el número óptimo de clusters:
+#no se usa
+```{r}
+fviz_nbclust(datafin[,c(8,12)], pam,diss=g.dist,method = "gap_stat",k.max = 10,verbose = F)
+```
+
+```{r}
+fviz_nbclust(datafin[,c(8,12)], hcut,diss=g.dist,method = "gap_stat",k.max = 10,verbose = F)
+```
+
+Calculando clusters:
+```{r}
+g.dist=daisy(datafin[,c(8,12)], metric = "gower")
+```
+
+```{r}
+pam.resultado=pam(g.dist,4,cluster.only = F)
+#Crear una columna con los clusters:
+datafin$clusterPT=pam.resultado$cluster
+```
+
+```{r}
+library(plyr) # para funcion "each"..
+# nota el uso de as.matrix con cbind:
+aggregate(as.matrix(cbind(datafin[,c(8,12)]))~ clusterPT, data=datafin,
+          FUN=plyr::each(MD = median, Media = mean))
+```
+
+```{r}
+agg=aggregate(as.matrix(cbind(datafin[,c(8,12)]))~ clusterPT, data = datafin, FUN = plyr::each(MD=median, Media=mean))
+```
+
+```{r}
+tablaResumen=t(as.data.frame(agg))
+tablaResumen
+```
+
+```{r}
+library(factoextra)
+```
+
+```{r}
+fviz_cluster(object= list(data=g.dist, cluster= datafin$clusterPT), geom= c("text"), ellipse.type = "convex")
+```
+
+```{r}
+library(ggrepel)
+fviz_cluster(object = list(data=g.dist, cluster=datafin$clusterPT), geom = c("text"), ellipse= FALSE, labelsize = 5, repel = T)
+```
+
+COMPARANDO CON JERARQUIZANTE AGLOMERATIVO Y DIANA
+
+```{r}
+#agnes
+library(factoextra)
+res.agnes<- hcut(g.dist, k = 4,hc_func='agnes',hc_method = "ward.D")
+datafin$clustAG=res.agnes$cluster
+
+##diana
+res.diana <- hcut(g.dist, k = 4,hc_func='diana')
+datafin$clustDIV=res.diana$cluster
+```
+
+```{r}
+#VISUALIZANDO
+fviz_dend(res.agnes,k=4, cex = 0.7, horiz = T)
+```
+
+
+```{r}
+fviz_dend(res.diana, cex = 0.7,horiz = T)
+```
+
+comparando
+```{r}
+fviz_silhouette(pam.resultado)
+```
+
+```{r}
+fviz_silhouette(res.agnes)
+```
+
+```{r}
+fviz_silhouette(res.diana)
+```
+
+#PAM nos da un mejor resultado, pues su widht es mayor.
+
+```{r}
+poorPAM=data.frame(pam.resultado$silinfo$widths)
+poorPAM$country=row.names(poorPAM)
+poorPAMcases=poorPAM[poorPAM$sil_width<0,'country']
+poorPAMcases
+```
+
+```{r}
+poorAGNES=data.frame(res.agnes$silinfo$widths)
+poorAGNES$country=row.names(poorAGNES)
+poorAGNEScases=poorAGNES[poorAGNES$sil_width<0,'country']
+poorAGNEScases
+```
+
+```{r}
+poorDIANA=data.frame(res.diana$silinfo$widths)
+poorDIANA$country=row.names(poorDIANA)
+poorDIANAcases=poorDIANA[poorDIANA$sil_width<0,'country']
+poorDIANAcases
+```
+
+```{r}
+datafin$clustAG=NULL
+datafin$clustDIV=NULL
+```
+
+
+FACTORIZACIÓN CONFIRMATIVA: comprobando el índice de calidad de democracia 
+
+```{r}
+names(datafin)
+```
+
+```{r}
+model <- ' postmateriales  =~ C_A1+C_A2+C_A3+C_A4+C_SD51'
+```
+
+```{r}
+#se normaliza variables a usar en el modelo
+datafin[,c(6,7,9,10,11)]=scale(datafin[,c(6,7,9,10,11)])
+```
+
+```{r}
+library(lavaan)
+cfa_fit = cfa(model, data=datafin, 
+           std.lv=TRUE,  
+           missing="fiml")
+```
+
+```{r}
+allParamCFA=parameterEstimates(cfa_fit,standardized = T)
+allFitCFA=as.list(fitMeasures(cfa_fit))
+```
+
+```{r}
+library(knitr)
+kable(allParamCFA[allParamCFA$op=="=~",])
+```
+
+```{r}
+#El ChiSquare es NO significativo (p_value debe ser mayor a 0.05 para que sea bueno)?
+allFitCFA[c("chisq", "df", "pvalue")] # pvalue>0.05
+```
+
+```{r}
+#El Índice Tucker Lewi es mayor a 0.9?
+allFitCFA$tli # > 0.90
+```
+
+```{r}
+#La Raíz del error cuadrático medio de aproximación es menor a 0.05?
+allFitCFA[c('rmsea.ci.lower','rmsea' ,'rmsea.ci.upper')] # 0.05 en el Int de Conf?
+```
+
+```{r}
+datafin=as.data.frame(cbind(datafin,lavPredict(cfa_fit)))
+summary(datafin)
+datafin$C_A1=NULL
+datafin$C_A2=NULL
+datafin$C_A3=NULL
+datafin$C_A4=NULL
+datafin$C_SD51=NULL
+```
+
+
+REGRESIÓN POISSON: comprobando las hipótesis
+
+```{r}
+summary(datafin)
+datatest=as.data.frame(datafin[,c(2:5,9)])
+```
+
+```{r, results='asis'}
+test_poisson=glm(protestas~.,family = poisson, data=datatest)
+summary(test_poisson)
+```
+
+```{r}
+exp(confint(test_poisson))
+```
+```{r}
+#library(AER)
+library(AER)
+AER::dispersiontest(test_poisson,trafo=1)
+```
+
+
+REGRESIÓN POISSON ENTRE GRUPOS:
+
+
+REGRESIÓN POISSON CLUSTER 1
+
+```{r}
+library(rio)
+link="https://github.com/marielahorna/Trabajo-Estad-stica/raw/master/postmateriales.xlsx"
+download.file(link,"file.xlsx")
+dataclust= import_list('file.xlsx',rbind = FALSE)
+clust1=dataclust[[1]]
+clust2=dataclust[[2]]
+clust3=dataclust[[3]]
+clust4=dataclust[[4]]
+str(clust1)
+```
+
+
+```{r}
+C1=clust1[,c(2:5,8)]
+```
+
+```{r, results='asis'}
+prot_poisson=glm(protestas~.,family = poisson, data=C1)
+summary(prot_poisson)
+```
+
+```{r}
+exp(confint(prot_poisson))
+```
+
+```{r}
+library(AER)
+AER::dispersiontest(prot_poisson,trafo=1)
+```
+
+
+REGRESION POISSON CLUSTER 2
+```{r}
+p2= clust2[,c(2:5,8)]
+```
+
+```{r, results='asis'}
+prot_poisson=glm(protestas~.,family = poisson, data=p2)
+summary(prot_poisson)
+```
+
+```{r}
+exp(confint(prot_poisson))
+```
+```{r}
+library(AER)
+AER::dispersiontest(prot_poisson,trafo=1)
+```
+
+
+REGRESIÓN POISSON CLUSTER 3
+
+```{r}
+p3=clust3[,c(2:5,8)]
+```
+
+```{r, results='asis'}
+prot_poisson2=glm(protestas~.,family = poisson, data=p3)
+summary(prot_poisson2)
+```
+
+```{r}
+exp(confint(prot_poisson2))
+```
+
+```{r}
+library(AER)
+AER::dispersiontest(prot_poisson2,trafo=1)
+```
+
+
+REGRESION POISSON CLUSTER 4 
+```{r}
+p4=clust4[,c(2:5,8)]
+```
+
+```{r, results='asis'}
+prot_poisson4=glm(protestas~.,family = poisson, data=p4)
+summary(prot_poisson4)
+```
+
+```{r}
+exp(confint(prot_poisson4))
+```
+
+```{r}
+library(AER)
+AER::dispersiontest(prot_poisson4,trafo=1)
+```
+
+
+MAPA: 
+
+#CON VARIABLES DE CONTROL
+
+
+EL MAPA:
+```{r}
+# instalar:
+library(sp)
+library(geojsonio)
+library(rgdal)
+
+fromGit="https://github.com/marielahorna/Trabajo-Estad-stica/raw/master/Mapa_paises_mundo.json" # link desde github
+
+mundiMap <- rgdal::readOGR(fromGit,stringsAsFactors = FALSE)
+plot(mundiMap)
+
+
+```
+
+```{r}
+plot(mundiMap, border='black')
+```
+
+
+```{r}
+head(mundiMap@data)
+```
+
+```{r}
+sort(mundiMap@data$COUNTRY)
+```
+
+```{r}
+names(mundiMap)
+```
+
+```{r}
+datafin[datafin$country=="Afghanistan","country"]="Afghamistan"
+datafin[datafin$country=="Democratic Republic of Congo","country"]="Congo, Democratic Republic of"
+datafin[datafin$country=="Congo","country"]="Congo, Republic of the"
+datafin[datafin$country=="Venezuela","country"]="Venezuela, Bolivarian Republic of"
+datafin[datafin$country=="Vietnam","country"]="Viet Nam"
+datafin[datafin$country=="Bosnia and Herzegovina","country"]="Bosnia & Herzegovina"
+datafin[datafin$country=="Moldova","country"]="Moldova, Republic of"
+datafin[datafin$country=="Laos","country"]="Lao, People's Democratic Repub"
+datafin[datafin$country=="United Kingdom","country"]="United Kingdom"
+
+```
+
+```{r}
+teste=merge(mundiMap@data,datafin,by.x='COUNTRY',by.y='country')
+teste$COUNTRY
+teste$id=NULL
+```
+
+```{r}
+CountFull=merge(mundiMap,datafin,by.x='COUNTRY',by.y='country')
+```
+
+```{r}
+names(CountFull)
+```
+
+```{r}
+aggregate(protestas~clusterPT,data=CountFull,FUN = mean)
+```
+
+```{r}
+library(car)
+
+# ejecutar (run) UNA VEZ!!!
+CountFull@data$clusterPT<-recode(CountFull@data$clusterPT,"1=3;2=1;3=4;4=2") 
+```
+
+```{r}
+myColors=c('blue','yellow','green','red')
+plot(CountFull,col=myColors[CountFull$clusterPT], main='Protestas usando clusters')
+```
+
+
+#CON VARIABLES INDEPENDIENTES: 
+
+CLUSTERS:
+
+```{r}
+str(datafin)
+library(cluster)
+g.dist = daisy(datafin[,c(3:5,9)])
+```
+
+```{r}
+fviz_nbclust(datafin[,c(3:5,9)], pam,diss=g.dist,method = "gap_stat",k.max = 10,verbose = F)
+```
+
+```{r}
+fviz_nbclust(datafin[,c(3:5,9)], hcut,diss=g.dist,method = "gap_stat",k.max = 10,verbose = F)
+```
+
+
+```{r}
+library(factoextra)
+
+res.agnes<- hcut(g.dist, k = 4,hc_func='agnes',hc_method = "ward.D")
+datafin$clustAG=res.agnes$cluster
+
+res.pam=pam(g.dist,4,cluster.only = F)
+datafin$clustPAM=res.pam$cluster
+
+res.diana <- hcut(g.dist, k = 4,hc_func='diana')
+datafin$clustDIV=res.diana$cluster
+```
+
+```{r}
+fviz_silhouette(res.agnes)
+```
+
+
+```{r}
+fviz_silhouette(res.pam)
+```
+
+```{r}
+fviz_silhouette(res.diana)
+```
+
+```{r}
+poorPAM=data.frame(res.pam$silinfo$widths)
+poorPAM$country=row.names(poorPAM)
+poorPAMcases=poorPAM[poorPAM$sil_width<0,'country']
+poorPAMcases
+```
+
+```{r}
+poorAGNES=data.frame(res.agnes$silinfo$widths)
+poorAGNES$country=row.names(poorAGNES)
+poorAGNEScases=poorAGNES[poorAGNES$sil_width<0,'country']
+poorAGNEScases
+```
+
+```{r}
+poorDIANA=data.frame(res.diana$silinfo$widths)
+poorDIANA$country=row.names(poorDIANA)
+poorDIANAcases=poorDIANA[poorDIANA$sil_width<0,'country']
+poorDIANAcases
+```
+
+
+
+```{r}
+# instalar:
+library(sp)
+library(geojsonio)
+library(rgdal)
+
+fromGit="https://github.com/marielahorna/Trabajo-Estad-stica/raw/master/Mapa_paises_mundo.json" # link desde github
+
+mundiMap <- rgdal::readOGR(fromGit,stringsAsFactors = FALSE)
+plot(mundiMap)
+
+
+```
+
+
+```{r}
+plot(mundiMap, border='black')
+```
+
+
+```{r}
+head(mundiMap@data)
+```
+
+```{r}
+sort(mundiMap@data$COUNTRY)
+```
+
+```{r}
+names(mundiMap)
+```
+
+```{r}
+teste=merge(mundiMap,datafin,by.x='COUNTRY',by.y='country')
+str(teste)
+teste$COUNTRY
+teste$id=NULL
+```
+
+```{r}
+datafin[datafin$country=="Democratic Republic of Congo","country"]="Congo, Democratic Republic of"
+
+datafin[datafin$country=="Congo","country"]="Congo, Republic of the"
+datafin[datafin$country=="Venezuela","country"]="Venezuela, Bolivarian Republic of"
+datafin[datafin$country=="Vietnam","country"]="Viet Nam"
+datafin[datafin$country=="Bosnia and Herzegovina","country"]="Bosnia & Herzegovina"
+datafin[datafin$country=="Moldova","country"]="Moldova, Republic of"
+datafin[datafin$country=="Laos","country"]="Lao, People's Democratic Repub"
+```
+
+
+```{r}
+teste$COUNTRY
+```
+
+```{r}
+CountFull=merge(mundiMap,datafin,by.x='COUNTRY',by.y='country')
+```
+
+```{r}
+names(CountFull)
+```
+```{r}
+aggregate(protestas~clustDIV,data=CountFull,FUN = mean)
+```
+
+```{r}
+library(car)
+
+# ejecutar (run) UNA VEZ!!!
+CountFull@data$clustDIV<-recode(CountFull@data$clustDIV,"1=2;2=4;3=1;4=3") 
+```
+
+```{r}
+myColors=c('yellow','blue','green','red')
+plot(mundiMap,col='black', main='Protestas usando  clusters')
+plot(CountFull,col=myColors[CountFull$clustDIV], add=T)
+```
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
