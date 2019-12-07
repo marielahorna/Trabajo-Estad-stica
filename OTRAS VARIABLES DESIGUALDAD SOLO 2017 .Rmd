@@ -1,0 +1,238 @@
+```{r}
+library(htmltab)
+library(rio)
+link="http://hdr.undp.org/en/composite/IHDI#e"
+path= '/html/body/div[2]/div/section/div/div/div/div/div/table'
+UNDP=htmltab(doc=link, which=path)
+str(UNDP)
+
+IDH=UNDP[,c(2,3)]
+IDH
+names(IDH)[names(IDH)=='Table 3. Inequality-adjusted Human Development Index >> Country']='Country'
+names(IDH)[names(IDH)=='Human Development Index (HDI) >> Value >> 2017']='IDH2017'
+names(IDH)
+row.names(IDH)= NULL
+IDH= IDH[-c(60,114,154,193,200:216),]
+```
+```{r}
+DESEDUCACION=UNDP[,c(2,11)]
+names(DESEDUCACION)[names(DESEDUCACION)=='Table 3. Inequality-adjusted Human Development Index >> Country']='Country'
+names(DESEDUCACION)[names(DESEDUCACION)=='Inequality-adjusted education index >> Value >> 2017']='DESED2017'
+names(DESEDUCACION)
+row.names(DESEDUCACION)= NULL
+DESEDUCACION= DESEDUCACION[-c(60,114,154,193,200:216),]
+```
+```{r}
+DESINGRESOS=UNDP[,c(2,13)]
+names(DESINGRESOS)[names(DESINGRESOS)=='Table 3. Inequality-adjusted Human Development Index >> Country']='Country'
+names(DESINGRESOS)[names(DESINGRESOS)=='Inequality-adjusted income index >> Value >> 2017']='DESINGR2017'
+DESINGRESOS= DESINGRESOS[-c(60,114,154,193,200:216),]
+```
+
+```{r}
+
+link="https://github.com/marielahorna/Trabajo-Estad-stica/raw/master/VARIABLES%20INDEPENDIENTES-IDEA.xlsx"
+#descargando en carpeta actual
+download.file(link, "file.xlsx")
+ind= import_list('file.xlsx',rbind = FALSE)
+pbi=ind[[3]]
+desempleo=ind[[4]]
+pbi[,-c(1)]=as.numeric(pbi[,-c(1)])
+```
+
+```{r}
+desempleo[,-c(1)]=as.numeric(desempleo[,-c(1)]) 
+```
+
+LIMPIEZA:
+
+```{r}
+pbi=pbi[-c(6,34,46,79,85:88,90,109,115:117,119:120, 122, 132, 135, 140, 149, 159, 161, 169, 173, 174:175, 180, 191, 193:194, 204, 205, 210, 212, 214, 215, 223, 232),]
+```
+
+```{r}
+desempleo=desempleo[-c(4, 30, 43, 78:81, 83, 100, 106, 107, 108, 110:111, 113, 122, 124, 129, 137, 148, 155, 162, 168, 178, 180, 181, 190:191, 196, 198, 200:201, 208, 217),]
+desempleo[c(4),]
+desempleo$`Tasa de desempleo`[4]="2.11"
+desempleo[c(9),]
+desempleo$`Tasa de desempleo`[9]="5.02"
+desempleo[c(16),]
+desempleo$`Tasa de desempleo`[16]="1.03"
+desempleo[c(43),]
+desempleo$`Tasa de desempleo`[43]="4.08"
+desempleo[c(65),]
+desempleo$`Tasa de desempleo`[65]="9.01"
+desempleo[c(66),]
+desempleo$`Tasa de desempleo`[66]="23.12"
+desempleo[c(84),]
+desempleo$`Tasa de desempleo`[84]="14.03"
+desempleo[c(85),]
+desempleo$`Tasa de desempleo`[85]="3.07"
+desempleo[c(94),]
+desempleo$`Tasa de desempleo`[94]="2.12"
+desempleo[c(96),]
+desempleo$`Tasa de desempleo`[96]="22.04"
+desempleo[c(110),]
+desempleo$`Tasa de desempleo`[110]="5.01"
+desempleo[c(127),]
+desempleo$`Tasa de desempleo`[127]="5.09"
+desempleo[c(116),]
+desempleo$`Tasa de desempleo`[116]="7.06"
+desempleo[c(120),]
+desempleo$`Tasa de desempleo`[120]="14.08"
+desempleo[c(125),]
+desempleo$`Tasa de desempleo`[125]="4.11"
+desempleo[c(145),]
+desempleo$`Tasa de desempleo`[145]="1.05"
+desempleo[c(160),]
+desempleo$`Tasa de desempleo`[160]="7.11"
+desempleo[c(168),]
+desempleo$`Tasa de desempleo`[168]="3.11"
+desempleo[c(169),]
+desempleo$`Tasa de desempleo`[169]="1.05"
+desempleo[c(173),]
+desempleo$`Tasa de desempleo`[173]="2.04"
+desempleo[c(178),]
+desempleo$`Tasa de desempleo`[178]="5.12"
+desempleo[,-c(1)]=as.numeric(desempleo[,-c(1)]) 
+```
+DEPENDIENTE
+
+```{r}
+library(rio)
+PROTESTAS= import("https://github.com/marielahorna/Trabajo-Estad-stica/raw/master/data%20dependiente.xlsx")
+```
+
+DEMOCRACIA
+```{r}
+DEM="https://github.com/KarolSilene/PROYECTO-PROTESTAS/raw/master/V.POL%202017.xlsx"
+DEMO= import(DEM)
+names(DEMO)[names(DEMO)=='ID_country_name']='Country'
+```
+
+```{r}
+names(PROTESTAS)[names(PROTESTAS)=='País']='Country'
+```
+
+
+```{r}
+TODOS= merge(DEMO,DESEDUCACION, all.x = T, all.y = T)
+TODOS2=merge(TODOS,desempleo, all.x = T, all.y=T)
+TODOS3=merge(TODOS2,DESINGRESOS, all.x = T, all.y = T )
+TODOS4=merge(TODOS3, IDH, all.x = T, all.y = T)
+TODOS5=merge(TODOS4, pbi, all.x = T, all.y = T)
+TODOS6=merge(TODOS5,PROTESTAS, all.x = T, all.y = T)
+TODOS6$DESINGR2017[57]="0.520"
+TODOS6[,-1]=lapply(TODOS6[,-1], as.numeric)
+TODOS6$Protestas[11]="8"
+TODOS6$`Tasa de desempleo`[85]='9.27'
+TODOS6=TODOS6[-c(104,105),]
+```
+```{r}
+row.names(TODOS6)=NULL
+TODOS6$DESED2017[105]=	0.705
+TODOS6$`Tasa de desempleo`[105]=11.63
+TODOS6$DESINGR2017[105]=0.637
+TODOS6$IDH2017[105]=0.798
+TODOS6$PBI[105]=4.233346e+11
+TODOS6$Protestas[110]=153
+TODOS6$`Tasa de desempleo`[127]=7.38
+TODOS6$PBI[127]=7.351028e+09
+TODOS6$DESINGR2017[145]=0.758
+TODOS6$DESED2017 [155]=0.658
+TODOS6$DESINGR2017[155]=0.522
+TODOS6$IDH2017[155]=	0.700
+TODOS6$Protestas[159]=80
+TODOS6$Protestas[164]= "NA"
+TODOS6$Protestas[164]=lapply(TODOS6$Protestas[164], as.numeric)
+TODOS6$Protestas[168]= "NA"
+TODOS6$Protestas[168]=lapply(TODOS6$Protestas[168], as.numeric)
+
+TODOS6=TODOS6[-c(164,168,173,182,189,195,197,215,226,243,247),]
+row.names(TODOS6)=NULL
+TODOS6$Protestas[238]=140
+TODOS6=TODOS6[-c(182,189,226,243,247),]
+row.names(TODOS6)=NULL
+TODOS6=TODOS6[-c(64,193),]
+row.names(TODOS6)=NULL
+```
+
+```{r}
+TODOS6$C_SD14[185]=0.9472968
+TODOS6$DESED2017[185]=0.702
+TODOS6$`Tasa de desempleo`[185]= 3.43
+TODOS6$DESINGR2017[185]=	0.709
+TODOS6$IDH2017[185]=0.903
+TODOS6$PBI[185]=1.471815e+12
+TODOS6$Protestas[185]=24
+TODOS6[,-1]=lapply(TODOS6[,-1], as.numeric)
+TODOS6=na.omit(TODOS6)
+row.names(TODOS6)=NULL
+```
+
+```{r}
+TheData=TODOS6[,-c(3:6,8:10)]
+row.names(TheData)=TheData$Country
+demoF=TheData[,c(2:6)]
+```
+FIN DE LIMPIEZA
+Clusters
+
+```{r}
+library(cluster)
+library(stringr)
+library(magrittr)
+library(htmltab)
+library(factoextra)
+library(cluster)
+set.seed(2019)
+g.dist = daisy(demoF, metric="gower")
+fviz_nbclust(demoF, pam,diss=g.dist,method = "gap_stat",k.max = 10,verbose = F)
+```
+```{r}
+fviz_nbclust(demoF, hcut,diss=g.dist,method = "gap_stat",k.max = 10,verbose = F)
+```
+```{r}
+#DBSCAN
+proyeccion = cmdscale(g.dist, k=2,add = T) # k is the number of dim
+demoF$dim1 <- proyeccion$points[,1]
+demoF$dim2 <- proyeccion$points[,2]
+g.dist.cmd = daisy(demoF[,c('dim1','dim2')], metric = 'euclidean')
+base= ggplot(demoF,aes(x=dim1, y=dim2,label=row.names(demoF))) 
+base + geom_text(size=2)
+```
+```{r}
+g.dist.cmd = daisy(demoF[,c('dim1','dim2')], metric = 'euclidean')
+library(dbscan)
+kNNdistplot(g.dist.cmd, k=5)
+```
+```{r}
+library(fpc)
+db.cmd = dbscan(g.dist.cmd, eps=0.06, MinPts=5,method = 'dist')
+db.cmd
+```
+```{r}
+#cual es mejor o peor
+aggregate(as.matrix(cbind(demoF))~ clusterPT, data=demo,
+          FUN=plyr::each(MD = median, Media = mean))
+
+```
+
+
+```{r}
+#estimNDO LOS L'IMITES
+min(demoF[,c('dim1','dim2')]); max(demoF[,c('dim1','dim2')])
+limites=c(-0.6,0.7)
+library(ggrepel)
+base= ggplot(demoF,aes(x=dim1, y=dim2)) + ylim(limites) + xlim(limites) + coord_fixed()
+
+demoF$dbCMD=as.factor(db.cmd$cluster)
+
+dbplot= base + geom_point(aes(color=demoF$dbCMD)) 
+dbplot
+```
+
+```{r}
+dbplot + geom_text_repel(size=5,aes(label=row.names(demoF)))
+```
+
