@@ -1,0 +1,72 @@
+CORRER "DATAFIN" DEL RMD DE "PROYECTO TERMINADO"
+```{r}
+
+RBNDATA= datafin[,c(2:7,9:11,13)]
+
+```
+```{r, results='asis'}
+names(RBNDATA)[names(RBNDATA)=="per capita"]="percapita"
+names(RBNDATA)[names(RBNDATA)=="tasa de desempleo"]="tasadesempleo"
+
+library(ggplot2)
+library(foreign)
+library(MASS)
+RBN= glm.nb(protestas~percapita+gini+tasadesempleo + C_A1+ C_A2+ C_A3+C_A4+ C_SD51+clusterPT ,data=RBNDATA)
+exp(confint(RBN))
+
+```
+```{r}
+summary(RBN)
+```
+
+```{r}
+RBN1= glm.nb(protestas~percapita+ clusterPT,data=RBNDATA)
+
+RBN2= glm.nb(protestas~percapita+gini+clusterPT ,data=RBNDATA)
+
+RBN3= glm.nb(protestas~percapita+gini+tasadesempleo+ clusterPT ,data=RBNDATA)
+
+RBN4= glm.nb(protestas~percapita+gini+tasadesempleo + C_A1 +clusterPT ,data=RBNDATA)
+
+RBN5= glm.nb(protestas~percapita+gini+tasadesempleo + C_A1+ C_A2+ clusterPT ,data=RBNDATA)
+
+RBN6= glm.nb(protestas~percapita+gini+tasadesempleo + C_A1+ C_A2+ C_A3+clusterPT ,data=RBNDATA)
+
+RBN7= glm.nb(protestas~percapita+gini+tasadesempleo + C_A1+ C_A2+ C_A3+C_A4+clusterPT ,data=RBNDATA)
+
+RBN8= glm.nb(protestas~percapita+gini+tasadesempleo + C_A1+ C_A2+ C_A3+C_A4+ C_SD51+clusterPT ,data=RBNDATA)
+
+```
+
+```{r}
+summary(RBN1)
+```
+
+```{r}
+summary(RBN2)
+```
+
+```{r}
+summary(RBN3)
+```
+```{r}
+summary(RBN4)
+```
+```{r}
+summary(RBN5)
+```
+```{r}
+summary(RBN6)
+```
+```{r}
+summary(RBN7)
+```
+
+
+RBN DE TODAS LAS VARIABLES, MENOS CLUSTERPT
+
+```{r}
+RBNSINCLUSTER= glm.nb(protestas~percapita+gini+tasadesempleo + C_A1+ C_A2+ C_A3+C_A4+ C_SD51 ,data=RBNDATA)
+summary(RBNSINCLUSTER)
+```
+
